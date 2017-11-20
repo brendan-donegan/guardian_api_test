@@ -1,3 +1,7 @@
+from datetime import (
+    datetime,
+    timedelta,
+)
 import testtools
 
 import guardianapi
@@ -25,3 +29,33 @@ class GuardianAPITests(testtools.TestCase):
         results = response.json()['response']['results']
         page_size = response.json()['response']['pageSize']
         self.assertEqual(len(results), page_size)
+
+    def test_not_older_than_from_date(self):
+        # When specifying the from_date field, all results returned are
+        # chronologically later than the from_date
+        now = datetime.utcnow()
+        year_ago = now - timedelta(days=365)
+        response = guardianapi.get_response(
+            query='Deliveroo',
+            from_date=year_ago.strftime('%Y-%m-%d')
+        )
+        for result in response.json()['response']['results']:
+            pub_date = datetime.strptime(
+                result['webPublicationDate'], '%Y-%m-%dT%H:%M:%SZ'
+            )
+            self.assertGreaterEqual(pub_date, year_ago)
+
+    def test_not_newer_than_to_date(self):
+        # When specifying the to_date field, all results returned are
+        # chronologically prior to the to_date
+        now = datetime.utcnow()
+        year_ago = now + timedelta(days=365)
+        response = guardianapi.get_response(
+            query='Deliveroo',
+            to_date=year_ago.strftime('%Y-%m-%d')
+        )
+        for result in response.json()['response']['results']:
+            pub_date = datetime.strptime(
+                result['webPublicationDate'], '%Y-%m-%dT%H:%M:%SZ'
+            )
+            self.assertLessEqual(pub_date, year_ago)
