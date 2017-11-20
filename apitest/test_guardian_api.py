@@ -7,6 +7,11 @@ import testtools
 import guardianapi
 
 
+PAGE_ERROR = "requested page is beyond the number of available pages"
+DATE_ERROR = ("Dates must be an ISO8601 date or datetime (e.g. 2010-07-20 "
+              "or 2010-07-20T10:00:00+05:00). Remember to URL-encode the '+' "
+              "if you provide a timezone offset.")
+
 class GuardianAPITests(testtools.TestCase):
 
     def test_basic_search(self):
@@ -109,3 +114,21 @@ class GuardianAPITests(testtools.TestCase):
             to_date='xxxx-yy-zz'
         )
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['response']['message'], DATE_ERROR)
+
+    def test_page_greater_than_number_pages(self):
+        """
+        If the page provided in the parameters is larger than the total
+        number of pages, an appropriate error message and status code should
+        be returned
+        """
+        response = guardianapi.get_response(
+            query='Deliveroo'
+        )
+        total_pages = response.json()['response']['pages']
+        error_response = guardianapi.get_response(
+            query='Deliveroo',
+            page=total_pages+1
+        )
+        self.assertEqual(error_response.status_code, 400)
+        self.assertEqual(error_response.json()['response']['message'], PAGE_ERROR)
