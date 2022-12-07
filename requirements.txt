@@ -1,4 +1,4 @@
-certifi==2017.11.5
+certifi==2022.12.7
 chardet==3.0.4
 extras==1.0.0
 fixtures==3.0.0
